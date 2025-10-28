@@ -1,0 +1,134 @@
+任务1
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Stu {
+    string name;
+    double c, m, e, avg;
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    if (!(cin >> n)) return 0;
+
+    vector<Stu> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i].name >> a[i].c >> a[i].m >> a[i].e;
+        a[i].avg = (a[i].c + a[i].m + a[i].e) / 3.0;
+    }
+
+    cout << fixed << setprecision(2);
+    for (auto &s : a) {
+        cout << left << setw(10) << s.name
+             << right << setw(8) << s.c
+             << setw(8) << s.m
+             << setw(8) << s.e
+             << setw(8) << s.avg;
+        if (s.avg >= 90 - 1e-8) cout << " Excellent";
+        cout << '\n';
+    }
+    return 0;
+}
+
+
+任务2
+#include <bits/stdc++.h>
+using namespace std;
+
+int countVowels(const char *p) {
+    int cnt = 0;
+    for (; *p; ++p) {
+        char ch = tolower(*p);
+        if (ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u')
+            ++cnt;
+    }
+    return cnt;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    string line;
+    getline(cin, line);
+    cout << "Number of vowels: " << countVowels(line.c_str()) << '\n';
+    return 0;
+}
+
+
+任务3
+#include <bits/stdc++.h>
+using namespace std;
+
+inline double square(double x) { return x * x; }
+
+double power(double base, int exponent = 2) {
+    return pow(base, exponent);
+}
+
+double calc(double a, double b, char op) {
+    switch (op) {
+        case '+': return a + b;
+        case '-': return a - b;
+        case '*': return a * b;
+        case '/':
+            if (fabs(b) < 1e-12) {
+                cout << "Error: divide by zero\n";
+                return NAN;
+            }
+            return a / b;
+        default:
+            cerr << "Unknown op\n";
+            return NAN;
+    }
+}
+
+double calc(int a, int b, char op) {
+    return calc(static_cast<double>(a), static_cast<double>(b), op);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    double x, y;
+    char op;
+    if (!(cin >> x >> y >> op)) return 0;
+
+    cout << fixed << setprecision(2);
+    cout << "square(" << x << ") = " << square(x) << '\n';
+    cout << "power(" << x << ",3) = " << power(x, 3) << '\n';
+
+    double res = calc(x, y, op);
+    if (!isnan(res)) cout << x << op << y << '=' << res << '\n';
+    return 0;
+}
+
+
+任务4
+#include <bits/stdc++.h>
+using namespace std;
+
+void swap(int &x, int &y) {
+    int t = x; x = y; y = t;
+}
+
+// 重载：也支持长整型
+void swap(long long &x, long long &y) {
+    long long t = x; x = y; y = t;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int a, b;
+    cin >> a >> b;
+    cout << "Before swap: X=" << a << ", y=" << b << '\n';
+    swap(a, b);
+    cout << "After swap: X=" << a << ", y=" << b << '\n';
+    return 0;
+}
