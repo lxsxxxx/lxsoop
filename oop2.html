@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>面向对象实验</title>
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+<style>
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;margin:40px;background:#fafafa;}
+    h1,h2{color:#111;margin-top:40px;}
+    pre{border-radius:8px;font-size:14px;}
+</style>
+</head>
+<body>
+
+<h1>任务一：校园一卡通消费管理系统</h1>
+<pre><code class="cpp">#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;iomanip&gt;
+#include &lt;cstring&gt;
+using namespace std;
+
+struct Transaction {
+    double amount;      // 正=充值，负=消费
+    char  descr[60];
+};
+struct CampusCard {
+    int    id;
+    char   name[20];
+    double balance;
+    Transaction* trans = nullptr;
+    int    cnt = 0, cap = 0;
+};
+/*----- 工具函数 -----*/
+void expand(CampusCard&amp; c){
+    int n = c.cap ? c.cap*2 : 4;
+    auto* t = new Transaction[n];
+    for(int i=0;i&lt;c.cnt;++i) t[i]=c.trans[i];
+    delete[] c.trans; c.trans=t; c.cap=n;
+}
+bool consume(CampusCard&amp; c,double m,const char* item){
+    if(m&lt;=0||c.balance&lt;m) return false;
+    if(c.cnt==c.cap) expand(c);
+    c.balance-=m;
+    c.trans[c.cnt++]={-m};
+    strcpy(c.trans[c.cnt-1].descr,item);
+    return true;
+}
+void deposit(CampusCard&amp; c,double m){
+    if(m&lt;=0) return;
+    if(c.cnt==c.cap) expand(c);
+    c.balance+=m;
+    c.trans[c.cnt++]={m};
+    strcpy(c.trans[c.cnt-1].descr,"充值");
+}
+long toCent(double y){ return static_cast&lt;long&gt;(y*100); }
+void showBalance(const CampusCard&amp; c){
+    cout&lt;&lt;"ID："&lt;&lt;c.id&lt;&lt;" 姓名："&lt;&lt;c.name
+         &lt;&lt;" 余额：￥"&lt;&lt;fixed&lt;&lt;setprecision(2)&lt;&lt;c.balance
+         &lt;&lt;"（"&lt;&lt;toCent(c.balance)&lt;&lt;"分）\n";
+}
+void printReport(const CampusCard* u,int n){
+    cout&lt;&lt;"\n========== 账户报表 ==========\n";
+    cout&lt;&lt;left&lt;&lt;setw(8)&lt;&lt;"ID"&lt;&lt;setw(12)&lt;&lt;"Name"&lt;&lt;"Balance\n";
+    for(int i=0;i&lt;n;++i)
+        cout&lt;&lt;left&lt;&lt;setw(8)&lt;&lt;u[i].id
+             &lt;&lt;setw(12)&lt;&lt;u[i].name
+             &lt;&lt;fixed&lt;&lt;setprecision(2)&lt;&lt;u[i].balance&lt;&lt;'\n';
+}
+CampusCard* load(int&amp; n){
+    ifstream f("campus.txt");
+    if(!f){ n=0; return nullptr; }
+    f&gt;&gt;n;
+    auto* u=new CampusCard[n];
+    for(int i=0;i&lt;n;++i)
+        f&gt;&gt;u[i].id&gt;&gt;u[i].name&gt;&gt;u[i].balance;
+    return u;
+}
+void destroy(CampusCard* u,int n){ for(int i=0;i&lt;n;++i) delete[] u[i].trans; delete[] u; }
+
+int main(){
+    int n=0; CampusCard* u=nullptr;
+    cout&lt;&lt;"校园卡系统\n是否从文件导入？（y/n）:"; char ch; cin&gt;&gt;ch;
+    if(ch=='y'||ch=='Y') u=load(n);
+    if(!u){ cout&lt;&lt;"取消导入。\n"; return 0; }
+    cout&lt;&lt;"成功读取"&lt;&lt;n&lt;&lt;"条记录。\n";
+
+    consume(u[0],8.5,"食堂午餐");
+    showBalance(u[0]);
+    deposit(u[1],20);
+    showBalance(u[1]);
+    printReport(u,n);
+    destroy(u,n);
+}
+</code></pre>
+
+<h1>任务二：Date 日期类</h1>
+<pre><code class="cpp">#include &lt;iostream&gt;
+using namespace std;
+
+class Date{
+private:
+    int y,m,d;
+public:
+    void Init(int yy,int mm,int dd){ y=yy; m=mm; d=dd; }
+    int getYear()const{ return y; }
+    void setYear(int yy){ y=yy; }
+    int getMonth()const{ return m; }
+    void setMonth(int mm){ m=mm; }
+    int getDay()const{ return d; }
+    void setDay(int dd){ d=dd; }
+    void display()const{ cout&lt;&lt;y&lt;&lt;"-"&lt;&lt;m&lt;&lt;"-"&lt;&lt;d&lt;&lt;'\n'; }
+    int calcWeekday()const{          // 0=星期日
+        int yy=y, mm=m, dd=d;
+        if(mm==1||mm==2){ mm+=12; yy--; }
+        return (dd+2*mm+3*(mm+1)/5+yy+yy/4-yy/100+yy/400+1)%7;
+    }
+};
+
+int main(){
+    Date d; d.Init(2025,11,21);
+    d.display();
+    const char* wd[]={"星期日","星期一","星期二","星期三","星期四","星期五","星期六"};
+    cout&lt;&lt;"今天是："&lt;&lt;wd[d.calcWeekday()]&lt;&lt;'\n';
+}
+</code></pre>
+
+<h1>任务三：Triangle 三角形类</h1>
+<pre><code class="cpp">#include &lt;iostream&gt;
+#include &lt;cmath&gt;
+using namespace std;
+
+class Triangle{
+private:
+    double a,b,c;
+public:
+    void Init(double aa,double bb,double cc){ a=aa; b=bb; c=cc; }
+    double getSideA()const{ return a; }
+    void setSideA(double v){ a=v; }
+    double getSideB()const{ return b; }
+    void setSideB(double v){ b=v; }
+    double getSideC()const{ return c; }
+    void setSideC(double v){ c=v; }
+    bool isTriangle()const{
+        return a+b&gt;c&amp;&amp;a+c&gt;b&amp;&amp;b+c&gt;a;
+    }
+    double perimeter()const{ return a+b+c; }
+    double area()const{
+        double p=perimeter()/2;
+        return sqrt(p*(p-a)*(p-b)*(p-c));
+    }
+    int typeTriangle()const{ // 0直角 1锐角 2钝角
+        double x=a,y=b,z=c;
+        if(x&lt;y) swap(x,y); if(x&lt;z) swap(x,z);
+        double sum=y*y+z*z, xx=x*x;
+        if(abs(sum-xx)&lt;1e-6) return 0;
+        return sum&gt;xx ? 1 : 2;
+    }
+};
+
+int main(){
+    Triangle t; t.Init(3,4,5);
+    if(!t.isTriangle()){ cout&lt;&lt;"不能构成三角形\n"; return 0; }
+    cout&lt;&lt;"周长："&lt;&lt;t.perimeter()&lt;&lt;"\n面积："&lt;&lt;t.area()&lt;&lt;'\n';
+    const char* tp[]={"直角","锐角","钝角"};
+    cout&lt;&lt;"类型："&lt;&lt;tp[t.typeTriangle()]&lt;&lt;"三角形\n";
+}
+</code></pre>
+
+</body>
+</html>
