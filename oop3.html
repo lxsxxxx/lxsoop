@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>面向对象实验</title>
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+<style>
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;margin:40px;background:#fafafa;}
+    h1,h2{color:#111;margin-top:40px;}
+    pre{border-radius:8px;font-size:14px;}
+</style>
+</head>
+<body>
+
+<h1>MyArray.h</h1>
+<pre><code class="cpp">MyArray.h
+#ifndef MYARRAY_H
+#define MYARRAY_H
+#include <iostream>
+class MyArray {
+private:
+int* p;   // 动态数组首地址
+int  N;   // 元素个数
+复制
+/* 工具：检查下标合法性 */
+void checkIndex(int idx) const;
+public:
+/* 1. 构造函数群 */
+MyArray();                          // 默认：空数组
+explicit MyArray(int n, int val = 0); // 指定长度，初始值默认 0
+MyArray(const MyArray& rhs);        // 深拷贝
+复制
+/* 2. 析构函数 */
+~MyArray();
+
+/* 3. 赋值运算符（深拷贝） */
+MyArray& operator=(const MyArray& rhs);
+
+/* 4. 数组合并：按顺序拼接 */
+MyArray merge(const MyArray& rhs) const;
+
+/* 5. 四则运算：按元素对应，长度不一致时取较小长度 */
+MyArray add(const MyArray& rhs)      const;
+MyArray subtract(const MyArray& rhs) const;
+MyArray multiply(const MyArray& rhs) const;
+MyArray divide(const MyArray& rhs)   const;
+
+/* 6. 辅助接口 */
+int  size() const { return N; }
+int& at(int idx);       // 可读写访问
+int  at(int idx) const; // 只读访问
+
+/* 7. 输出友好 */
+friend std::ostream& operator<<(std::ostream& os, const MyArray& a);
+};
+#endif // MYARRAY_H
+
+</code></pre>
+
+<h1>MyArray.cpp</h1>
+<pre><code class="cpp">MyArray.cpp
+#include "MyArray.h"
+#include <stdexcept><iomanip>
+/* 工具：下标检查 */
+void MyArray::checkIndex(int idx) const {
+if (idx < 0 || idx >= N)
+throw std::out_of_range("MyArray index out of range");
+}
+/* 默认构造：空数组 */
+MyArray::MyArray() : p(nullptr), N(0) {}
+/* 带长度构造 */
+MyArray::MyArray(int n, int val) : N(n) {
+if (n <= 0) {
+p = nullptr;
+N = 0;
+}
+else {
+p = new int[N];
+for (int i = 0; i < N; ++i) p[i] = val;
+}
+}
+/* 深拷贝构造 */
+MyArray::MyArray(const MyArray& rhs) : N(rhs.N) {
+if (N == 0) {
+p = nullptr;
+}
+else {
+p = new int[N];
+for (int i = 0; i < N; ++i) p[i] = rhs.p[i];
+}
+}
+/* 析构：释放空间 */
+MyArray::~MyArray() {
+delete[] p;
+}
+/* 赋值运算符：深拷贝 */
+MyArray& MyArray::operator=(const MyArray& rhs) {
+if (this != &rhs) {
+delete[] p;
+N = rhs.N;
+if (N == 0) {
+p = nullptr;
+}
+else {
+p = new int[N];
+for (int i = 0; i < N; ++i) p[i] = rhs.p[i];
+}
+}
+return *this;
+}
+/* 合并：返回新对象 */
+MyArray MyArray::merge(const MyArray& rhs) const {
+int newLen = N + rhs.N;
+MyArray tmp(newLen);
+int k = 0;
+for (int i = 0; i < N; ++i)       tmp.p[k++] = p[i];
+for (int i = 0; i < rhs.N; ++i)   tmp.p[k++] = rhs.p[i];
+return tmp;
+}
+/* 四则运算：均按最小长度进行，避免越界 */
+MyArray MyArray::add(const MyArray& rhs) const {
+int len = (N < rhs.N) ? N : rhs.N;
+MyArray tmp(len);
+for (int i = 0; i < len; ++i) tmp.p[i] = p[i] + rhs.p[i];
+return tmp;
+}
+MyArray MyArray::subtract(const MyArray& rhs) const {
+int len = (N < rhs.N) ? N : rhs.N;
+MyArray tmp(len);
+for (int i = 0; i < len; ++i) tmp.p[i] = p[i] - rhs.p[i];
+return tmp;
+}
+MyArray MyArray::multiply(const MyArray& rhs) const {
+int len = (N < rhs.N) ? N : rhs.N;
+MyArray tmp(len);
+for (int i = 0; i < len; ++i) tmp.p[i] = p[i] * rhs.p[i];
+return tmp;
+}
+MyArray MyArray::divide(const MyArray& rhs) const {
+int len = (N < rhs.N) ? N : rhs.N;
+MyArray tmp(len);
+for (int i = 0; i < len; ++i) {
+if (rhs.p[i] == 0) throw std::runtime_error("Divide by zero");
+tmp.p[i] = p[i] / rhs.p[i];
+}
+return tmp;
+}
+/* 元素访问 */
+int& MyArray::at(int idx) {
+checkIndex(idx);
+return p[idx];
+}
+int MyArray::at(int idx) const {
+checkIndex(idx);
+return p[idx];
+}
+/* 流输出：形如 [1,2,3] */
+std::ostream& operator<<(std::ostream& os, const MyArray& a) {
+os << '[';
+for (int i = 0; i < a.N; ++i) {
+os << a.p[i];
+if (i + 1 < a.N) os << ',';
+}
+os << ']';
+return os;
+}
+</code></pre>
+
+<h1>main.cpp</h1>
+<pre><code class="cpp">#include "MyArray.h"
+#include <iostream>
+/* 打印标题 /
+void title(const char s) {
+std::cout << "\n==== " << s << " ====\n";
+}
+int main() {
+try {
+title("1. 默认构造 + 带参构造");
+MyArray a1;           // 空
+MyArray a2(5, 3);     // 5 个 3
+std::cout << "a1: " << a1 << "  size=" << a1.size() << '\n';
+std::cout << "a2: " << a2 << "  size=" << a2.size() << '\n';
+复制
+    title("2. 深拷贝构造");
+    MyArray a3(a2);
+    a3.at(0) = 99;        // 修改 a3 不影响 a2
+    std::cout << "a2: " << a2 << '\n';
+    std::cout << "a3: " << a3 << '\n';
+
+    title("3. 赋值运算符");
+    MyArray a4;
+    a4 = a2;
+    a4.at(1) = 88;
+    std::cout << "a2: " << a2 << '\n';
+    std::cout << "a4: " << a4 << '\n';
+
+    title("4. 数组合并");
+    MyArray b1(3, 10);
+    MyArray b2(2, 20);
+    MyArray b3 = b1.merge(b2);
+    std::cout << "b1: " << b1 << '\n';
+    std::cout << "b2: " << b2 << '\n';
+    std::cout << "merge: " << b3 << '\n';
+
+    title("5. 四则运算（长度不一致）");
+    MyArray c1(4);
+    for (int i = 0; i < 4; ++i) c1.at(i) = i + 1; // [1,2,3,4]
+    MyArray c2(3, 2);                             // [2,2,2]
+    std::cout << "c1: " << c1 << '\n';
+    std::cout << "c2: " << c2 << '\n';
+    std::cout << "add:      " << c1.add(c2) << '\n';
+    std::cout << "subtract: " << c1.subtract(c2) << '\n';
+    std::cout << "multiply: " << c1.multiply(c2) << '\n';
+    std::cout << "divide:   " << c1.divide(c2) << '\n';
+
+    title("6. 异常示例：除零");
+    MyArray d1(1, 6);
+    MyArray d2(1, 0);
+    // std::cout << d1.divide(d2) << '\n';  // 取消注释会抛异常
+
+    title("All tests passed.");
+}
+catch (const std::exception& ex) {
+    std::cerr << "Exception: " << ex.what() << '\n';
+}
+return 0;
+}
+</code></pre>
+
+</body>
+</html>
